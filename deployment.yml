@@ -1,0 +1,71 @@
+resource_types:
+- name: ssh
+  type: docker-image
+  source:
+    repository: umapathiv/concourse-ssh-resource
+- name: helm
+  type: docker-image
+  source:
+    repository: ilyasotkov/concourse-helm-resource
+    tag: 1.1.1
+resources:
+  - name: ec2-ssh
+    type: ssh
+    source:
+      hostname: ec2-3-83-15-241.compute-1.amazonaws.com
+      username: ubuntu
+      private_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEAqA1W1ovk6L50amfZJno8aUatH5/l41pBqS4QlFMerWLRrUzB
+        7v/W6Z0VEbunmCYrOQahrkl0qNes3jBnpL/eHHKDqVm46Mbo6kOKkPpmXSa0CT21
+        QbqkYd4VpAdlCE1g3+BbcQzgMPFAx+QvI36XYgwwRm8DiR8Nk+NBAYpoB+sD3ykJ
+        zAe+o7hvAdToWQlLkGasls08esfpu0yIC3346gFA0G4vkOwZ3dBpHNPpPtsofc9a
+        nWu8076R5WXyfff8LGCR58Qk5kV7LEiakgUWQGjxq2P8mr5mkM2pCd75EttARWtL
+        3oOeu018tP+kyaNF9u0W7B3NCVgeICzTwoev6QIDAQABAoIBAANK35ysePumX5mG
+        F1cNpglZ/SJVe6eMqSSrZl/BkSRMf1cp3dLU6F0DWtpSFuKAPPCNFLXZcpOsRhLE
+        WAN+Tte31qSGwXyuCPouAJT+kurYS0azEs4K3hWcyEfCbVRQT8mTF7eLTQkocOB5
+        tAK6BDVDj96RZjxVg2qWVTu2fntJM0REyD154BvvlgjQu0jzlmIWgVod+qsU8QBQ
+        mE+27IfGQSNvJIxMG+kv/Xr95ym5gtMEakkK+cOeSsWUDPL+jFwqnM/jNg4Q0cBT
+        AOc5Y94zM4IM1WGR46HuPVpO2SRFn3UQu1ObTKfMEUzm5FJNUONUL4/6mKKuMnNQ
+        dnCPxAECgYEA6/O29QfNAMfHD4K+Xyv9YiC6rDi+qG61jE1nFR3DeCpz+A4+OU3N
+        lT4cvagZTvo1oHnX4X5/pzvB7UGny+tclvzdJbXq4WMmMQaUElKJbu+zUnSXlN70
+        ZHhAkqCuq8B5q2M7eRC6dTMB78wSbUSVnrfOqa+TnEl7V5kHC0SadyECgYEAtlS0
+        +GdL+IN68vSRVQCcZLdFPA5wg+Kt3MeySJlYXFKJHVtAtpK9LjwIeJ5SfzolBeqZ
+        G4WMnwudQ16YKfQAzrZ/PXDY4F3dIgs8qUyVWtYUL1BAKEBSJGy2s2kmC03Xqq2D
+        e87bc+F4yh/qlJcRzWX7jrLwJiCX9t/jPYV2R8kCgYBk7jG7CwU0akDKb8EDcQvI
+        Z/uyI+vanNDoHUwVClBNHMvStjUDyjZAuvsMXdXFpN4/sR8ZhEUSwksoNEeUwS8w
+        HyZyNSkuFH2Hxyqb09aaL8rjYKBevCiKua3Viwpsyb7CA4azOOapr5IKg572QrpF
+        1JaAm2xnFD/AruMGfOgeQQKBgQCi2FLtjSywH5YfCkoHFk2YMouWkPry//DywDS+
+        XJ8rjdfCrW7F4ZcvhRS3zge2dBL/DsGCcCvhHPlvYzwaNEDIXvyTvoclFRBcyJZ8
+        StcWUx+iBlXW3WO//ozK/n2pGPQnD2Pgnycnf1hnhkv4PFj9Dzm3AKA2HWQ8bUhC
+        +UFj6QKBgB6VQKZ72mmngaTK/0zT/0YhK8wAjlyGKlnUu+AJR1Uu909HpPMnSaUC
+        UCx5bqtVYDw9FUfxK/jfNhyoc7w1YKghVOC2CbJbK1y98xgphgQXwRfWVwLnIh8k
+        16kyvH2akg9Fs4JBSvnsxqG3EhcP/FcHGL0+f2dFAmQGbyw3Ctqj
+        -----END RSA PRIVATE KEY-----
+  - name: helm-release
+  type: helm
+  source:
+    kubeconfig: |
+      apiVersion: v1
+      kind: Config
+      preferences: {}
+      contexts:
+      - context:
+          cluster: development
+    repos:
+      - name: helmrepo
+        url: https://github.com/Umapathy8888/Helmrepo.git     
+jobs:
+  - name: ssh-to-ec2
+    plan:
+      - put: ec2-ssh
+        #params:
+        #  command: 
+      - put: release-app
+        params:
+          values: helmrepo/values.yaml
+          override_values:
+          - key: replicas
+            value: 2
+          - key: version
+            path: version/number     

@@ -1,0 +1,12 @@
+resource_types:
+
+resources:
+
+jobs:
+  - name: springboot_deployment
+    plan:
+      - put: localhost
+        params:
+          command: sudo docker pull umapathiv/sprinboot:latest
+          command: sudo docker build -t springboot .
+          command: sudo docker run -d -p 8081:8081 sprinboot
